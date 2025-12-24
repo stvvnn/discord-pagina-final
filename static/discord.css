@@ -1,0 +1,97 @@
+body {
+    background: #313338;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.login-box {
+    width: 380px;
+    margin: 100px auto;
+    background: #1e1f22;
+    padding: 32px;
+    border-radius: 6px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+h2 {
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #b5bac1;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    background: #313338;
+    border: none;
+    border-radius: 4px;
+    color: white;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #5865f2;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button.secondary {
+    background: #3f4147;
+    margin-top: 10px;
+}
+
+.note {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.logout {
+    display: block;
+    margin-top: 20px;
+    text-align: center;
+    color: #5865f2;
+    text-decoration: none;
+}
+.chat-container {
+    width: 600px;
+    margin: 50px auto;
+    background: #1e1f22;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.chat-header {
+    padding: 10px;
+    background: #2b2d31;
+    font-weight: bold;
+}
+
+#messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#messages p {
+    margin: 5px 0;
+}
+
+#msg {
+    border: none;
+    padding: 12px;
+    background: #383a40;
+    color: white;
+}

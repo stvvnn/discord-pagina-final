@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discord Chat</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='discord.css') }}">
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+
+<div class="chat-container">
+
+    <!-- HEADER -->
+    <div class="chat-header">
+        💬 #{{ channel }}
+    </div>
+
+    <!-- BOTÓN BORRAR HISTORIAL -->
+    <form method="POST" action="/clear/{{ channel }}" style="margin: 10px;">
+        <button type="submit"
+            style="background:#ed4245;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">
+            🗑️ Delete messages
+        </button>
+    </form>
+
+    <!-- MENSAJES -->
+    <div id="messages" class="chat-messages">
+        {% for m in messages %}
+            <div class="message">
+                <b>{{ m.user }}</b>: {{ m.msg }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- INPUT -->
+    <form id="chat-form" class="chat-input">
+        <input id="message" autocomplete="off" placeholder="Message #{{ channel }}">
+        <button>Send</button>
+    </form>
+
+</div>
+
+<!-- VARIABLES DESDE FLASK -->
+<script>
+    const USER = "{{ user }}";
+    const CHANNEL = "{{ channel }}";
+</script>
+
+<script>
+    const socket = io();
+
+    const messagesDiv = document.getElementById("messages");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message");
+
+    // Auto scroll al entrar
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    // CUANDO LLEGA UN MENSAJE
+    socket.on("chat_message", function(data) {
+        if (data.channel !== CHANNEL) return;
+
+        const msg = document.createElement("div");
+        msg.className = "message";
+        msg.innerHTML = `<b>${data.user}</b>: ${data.msg}`;
+        messagesDiv.appendChild(msg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // CUANDO ENVÍAS UN MENSAJE
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        if (input.value.trim() !== "") {
+            socket.emit("chat_message", {
+                user: USER,
+                msg: input.value,
+                channel: CHANNEL
+            });
+            input.value = "";
+        }
+    });
+</script>
+
+</body>
+</html>
