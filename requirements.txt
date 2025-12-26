@@ -1,8 +1,0 @@
-Flask
-gunicorn
-flask-socketio
-python-socketio
-python-engineio
-eventlet
-pymongo
-dnspython
