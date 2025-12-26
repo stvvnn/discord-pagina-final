@@ -2,10 +2,11 @@ from flask import Flask, render_template, request, redirect, session
 from pymongo import MongoClient
 from flask_socketio import SocketIO, emit
 import hashlib
+import socket
 
 app = Flask(__name__)
 app.secret_key = "clave_super_secreta_xd"
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # MongoDB
 client = MongoClient("mongodb://localhost:27017/")
@@ -30,7 +31,7 @@ def login():
 
         if user:
             session["user"] = username
-            return redirect("/dashboard")
+            return redirect("/chat")
 
     return render_template("login.html")
 
@@ -48,51 +49,50 @@ def register():
 
     return redirect("/")
 
-# DASHBOARD
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect("/")
-    return render_template("dashboard.html", user=session["user"])
-
-# CHAT POR CANAL
-@app.route("/chat/<channel>")
-def chat(channel):
+# CHAT GENERAL
+@app.route("/chat")
+def chat():
     if "user" not in session:
         return redirect("/")
 
-    msgs = messages.find({"channel": channel}).sort("_id")
-    return render_template(
-        "chat.html",
-        user=session["user"],
-        messages=msgs,
-        channel=channel
-    )
+    msgs = messages.find().sort("_id")
+    return render_template("chat.html", user=session["user"], messages=msgs)
 
-# BORRAR HISTORIAL DEL CANAL
-@app.route("/clear/<channel>", methods=["POST"])
-def clear_channel(channel):
+# BORRAR HISTORIAL
+@app.route("/clear", methods=["POST"])
+def clear_chat():
     if "user" not in session:
         return redirect("/")
 
-    messages.delete_many({"channel": channel})
-    return redirect(f"/chat/{channel}")
+    messages.delete_many({})
+    return redirect("/chat")
 
-# SOCKET.IO → MENSAJES
+# SOCKET.IO
 @socketio.on("chat_message")
 def handle_chat_message(data):
-    if "user" not in session:
-        return
+    print(f"MENSAJE DE {data['user']}: {data['msg']}")
 
-    msg_data = {
+    # Creamos el diccionario para la base de datos
+    msg_to_save = {
         "user": data["user"],
-        "msg": data["msg"],
-        "channel": data["channel"]
+        "msg": data["msg"]
     }
 
-    messages.insert_one(msg_data)
+    # Al insertar, Mongo le meterá el _id a 'msg_to_save'
+    messages.insert_one(msg_to_save)
 
-    emit("chat_message", msg_data, broadcast=True)
+    # AQUÍ ESTÁ EL TRUCO
+    # Enviamos un diccionario NUEVO que no tenga el _id de Mongo
+    # o convertimos el que ya tenemos a algo seguro.
+    msg_to_emit = {
+        "user": data["user"],
+        "msg": data["msg"]
+    }
+
+    # Ahora sí, el emit no va a fallar
+    emit("chat_message", msg_to_emit, broadcast=True)
 
 if __name__ == "__main__":
-    socketio.run(app, host="127.0.0.1", port=3000, debug=True)
+    hostname = socket.gethostname()
+    ip_actual = socket.gethostbyname(hostname)
+    socketio.run(app, host=ip_actual, port=3000, debug=True)
