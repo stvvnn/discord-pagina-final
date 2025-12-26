@@ -2,61 +2,90 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Global Chat</title>
+    <title>Chat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='discord.css') }}">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
 
-<div id="welcome-screen" class="welcome-screen">
-    <h1>👋 Welcome back, {{ user }}</h1>
-    <button onclick="enterChat()">Go to messages</button>
-</div>
-
-
 <div class="chat-container">
 
-    <div class="chat-header">
-        💬 Global Chat
+    <!-- SIDEBAR -->
+    <div class="chat-sidebar">
+        <h3>💬 Chats</h3>
+
+        <ul>
+            {% for c in chats %}
+                <li><a href="/chat/{{ c }}"># {{ c }}</a></li>
+            {% endfor %}
+        </ul>
+
+        <form action="/create_chat" method="POST">
+            <input type="text" name="chat_name" placeholder="New chat" required>
+            <button type="submit">➕ Create</button>
+        </form>
+
+        <hr>
+
+        <a href="/logout">
+            <button style="background:#ed4245;color:white;border:none;padding:6px;width:100%;">
+                🚪 Logout
+            </button>
+        </a>
     </div>
 
-    <form method="POST" action="/clear" style="margin:10px;">
-        <button style="background:#ed4245;color:white;border:none;padding:6px 10px;border-radius:4px;">
-            🗑️ Delete history
-        </button>
-    </form>
+    <!-- CHAT -->
+    <div class="chat-main">
+        <div class="chat-header">
+            💬 Chat: {{ chat }}
+        </div>
 
-    <div id="messages" class="chat-messages">
-        {% for m in messages %}
-            <div class="message">
-                <b>{{ m.user }}</b>: {{ m.msg }}
-            </div>
-        {% endfor %}
+        <!-- 🗑️ BORRAR TODO EL CHAT -->
+        <form method="POST" action="/clear/{{ chat }}" style="margin:8px;">
+            <button style="
+                background:#ed4245;
+                color:white;
+                border:none;
+                padding:6px 12px;
+                border-radius:4px;
+                cursor:pointer;
+            ">
+                🗑️ Borrar todo el chat
+            </button>
+        </form>
+
+        <div id="messages" class="chat-messages">
+            {% for m in messages %}
+                <div class="message">
+                    <b>{{ m.user }}</b>: {{ m.msg }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <form id="chat-form" class="chat-input">
+            <input id="message" autocomplete="off" placeholder="Message #{{ chat }}">
+            <button>Send</button>
+        </form>
     </div>
-
-    <form id="chat-form" class="chat-input">
-        <input id="message" autocomplete="off" placeholder="Message #global">
-        <button>Send</button>
-    </form>
 
 </div>
 
 <script>
-    const USER = "{{ user }}";
+    const CHAT = "{{ chat }}";
     const socket = io();
+
+    socket.emit("join", { chat: CHAT });
 
     function addMessage(user, msg) {
         const div = document.createElement("div");
         div.innerHTML = `<b>${user}</b>: ${msg}`;
         document.getElementById("messages").appendChild(div);
-        messagesDiv.appendChild(div);
     }
 
     socket.on("chat_message", function(data) {
-        console.log("Nuevo mensaje recibido:", data); // Para debug
         addMessage(data.user, data.msg);
     });
-    
+
     document.getElementById("chat-form").addEventListener("submit", function(e) {
         e.preventDefault();
         const input = document.getElementById("message");
@@ -64,18 +93,12 @@
         if (input.value.trim() === "") return;
 
         socket.emit("chat_message", {
-            user: USER,
-            msg: input.value
+            msg: input.value,
+            chat: CHAT
         });
 
         input.value = "";
     });
-
-    function enterChat() {
-        document.getElementById("welcome-screen").style.display = "none";
-}
-
-
 </script>
 
 </body>
